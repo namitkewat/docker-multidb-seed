@@ -214,12 +214,7 @@ docker-multidb-seed/
 ├── mysql_data_generator.py      # MySQL: native ENUM/JSON, DATETIME(6)
 ├── mssql_data_generator.py      # SQL Server: MONEY/UNIQUEIDENTIFIER/DATETIMEOFFSET
 ├── oracle_data_generator.py     # Oracle: RAW/BINARY_FLOAT/INTERVAL/CLOB
-├── README.md
-└── init-scripts/                # Optional SQL seed scripts (auto-run on first boot)
-    ├── postgres/
-    ├── mysql/
-    ├── mssql/                   # Requires manual execution (see above)
-    └── oracle/
+└── README.md
 ```
 
 ---
