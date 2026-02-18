@@ -1,0 +1,9 @@
+cryptography==46.0.5
+oracledb==3.4.2
+psycopg==3.3.2
+psycopg-binary==3.3.2
+pycparser==3.0
+pymssql==2.3.13
+pymysql==1.1.2
+typing-extensions==4.15.0
+tzdata==2025.3

@@ -1,0 +1,111 @@
+# =======================================================================================
+#  Local Multi-Database Development & ETL Testing Starter Kit
+# =======================================================================================
+#
+#  Provides a one-command setup for PostgreSQL, Oracle, SQL Server, and MySQL.
+#  Pre-configured users, schemas, and health checks for local ETL/Parquet testing.
+#
+#  Tables:
+#    1. invoices        — Financial / transactional data (monetary, JSON, binary)
+#    2. employees       — HR / person data (dates, enums, text, UUIDs)
+#    3. sensor_readings — IoT / time-series (high-precision numerics, timestamps, arrays)
+#    4. product_catalog — Catalog data (nested JSON, arrays, large text, intervals)
+#
+# =======================================================================================
+
+services:
+  # ------------------ PostgreSQL ------------------
+  postgresql:
+    image: public.ecr.aws/bitnami/postgresql:17
+    container_name: postgres-db-dev
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRESQL_USERNAME=sentinel
+      - POSTGRESQL_PASSWORD=Test_123_Password
+      - POSTGRESQL_DATABASE=citadel
+    volumes:
+      - postgresqldata:/bitnami/postgresql
+    networks:
+      - db_network
+    healthcheck:
+      test: ['CMD', '/opt/bitnami/scripts/postgresql/healthcheck.sh']
+      interval: 15s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
+
+  # ------------------ Oracle ------------------
+  oracle:
+    image: gvenzl/oracle-free:23-slim-faststart
+    container_name: oracle-db-dev
+    ports:
+      - "1521:1521"
+    environment:
+      - ORACLE_PASSWORD=Test_123_Password
+      - APP_USER=sentinel
+      - APP_USER_PASSWORD=Test_123_Password
+    volumes:
+      - oracledata:/opt/oracle/oradata
+    networks:
+      - db_network
+    healthcheck:
+      test: ["CMD", "healthcheck.sh"]
+      interval: 1m
+      timeout: 20s
+      retries: 5
+      start_period: 5m
+
+  # ------------------ SQL Server (MSSQL) ------------------
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: mssql-db-dev
+    ports:
+      - "1433:1433"
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_PID=Developer
+      - MSSQL_SA_PASSWORD=Test_123_Password
+      - SA_PASSWORD=Test_123_Password
+    volumes:
+      - mssqldata:/var/opt/mssql
+    networks:
+      - db_network
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'Test_123_Password' -Q 'SELECT 1' -No || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 2m
+
+  # ------------------ MySQL ------------------
+  mysql:
+    image: public.ecr.aws/bitnami/mysql:9.4.0
+    container_name: mysql-db-dev
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=Test_123_Password
+      - MYSQL_USER=sentinel
+      - MYSQL_PASSWORD=Test_123_Password
+      - MYSQL_DATABASE=citadel
+    volumes:
+      - mysqldata:/bitnami/mysql/data
+    networks:
+      - db_network
+    healthcheck:
+      test: ['CMD', '/opt/bitnami/scripts/mysql/healthcheck.sh']
+      interval: 15s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
+
+networks:
+  db_network:
+    driver: bridge
+
+volumes:
+  postgresqldata:
+  oracledata:
+  mssqldata:
+  mysqldata:
