@@ -27,12 +27,12 @@ Enterprise ETL pipelines — whether built on Spark, AWS Glue, dbt, Airbyte, Fiv
 
 | # | Table              | Domain                           | Records | Columns | Key Types Exercised                                      |
 |---|--------------------|----------------------------------|---------|---------|----------------------------------------------------------|
-| 1 | `invoices`         | Financial / transactional        | 1,000   | 41      | DECIMAL, JSON/JSONB, BLOB/BYTEA, DATE, TIMESTAMP(TZ)    |
-| 2 | `employees`        | HR / person data                 | 1,000   | 40+     | UUID, ENUM, BOOLEAN, ARRAY[], INTERVAL, INET, TIME       |
-| 3 | `sensor_readings`  | IoT / time-series                | 1,000   | 31+     | BIGINT, FLOAT/REAL/DOUBLE, high-precision DECIMAL, BINARY|
-| 4 | `product_catalog`  | Product catalog / e-commerce     | 1,000   | 46      | Nested JSON, large TEXT/CLOB, MONEY, all numeric widths  |
+| 1 | `invoices`         | Financial / transactional        | 5,000   | 41      | DECIMAL, JSON/JSONB, BLOB/BYTEA, DATE, TIMESTAMP(TZ)    |
+| 2 | `employees`        | HR / person data                 | 5,000   | 40+     | UUID, ENUM, BOOLEAN, ARRAY[], INTERVAL, INET, TIME       |
+| 3 | `sensor_readings`  | IoT / time-series                | 5,000   | 31+     | BIGINT, FLOAT/REAL/DOUBLE, high-precision DECIMAL, BINARY|
+| 4 | `product_catalog`  | Product catalog / e-commerce     | 5,000   | 46      | Nested JSON, large TEXT/CLOB, MONEY, all numeric widths  |
 
-Record counts are configurable (default 1,000 per table, per database).
+Record counts are configurable (default 5,000 per table, per database).
 
 ---
 
@@ -129,7 +129,7 @@ python mssql_data_generator.py
 python oracle_data_generator.py
 ```
 
-Each script creates all 4 tables and inserts **1,000 records per table** by default.
+Each script creates all 4 tables and inserts **5,000 records per table** by default.
 
 ---
 
