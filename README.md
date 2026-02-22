@@ -110,7 +110,7 @@ docker-compose ps
 ### 2. Install Python Dependencies
 
 ```bash
-pip install psycopg[binary] pymysql pymssql oracledb
+pip install -r requirements.txt
 ```
 
 ### 3. Generate Data
@@ -122,8 +122,11 @@ python pg_data_generator.py
 # MySQL
 python mysql_data_generator.py
 
-# SQL Server (auto-creates 'citadel' database)
-python mssql_data_generator.py
+# SQL Server - Fast Bulk Insert (Requires Microsoft ODBC Driver 18)
+python mssql_data_generator_pyodbc.py
+
+# SQL Server - Fallback (Slower, but zero system dependencies)
+python mssql_data_generator_pymssql.py
 
 # Oracle (uses thin mode by default — no Oracle Client needed)
 python oracle_data_generator.py
@@ -168,15 +171,18 @@ All four Python generator scripts are designed to be fully idempotent. They util
 If they do, the scripts automatically issue a `DROP TABLE IF EXISTS` (or equivalent `CASCADE` logic) before recreating them. This ensures you always start with a clean slate and perfectly synchronized DDL constraints on every run, eliminating the need for manual `.sql` initialization scripts.
 
 ### SQL Server Auto-Initialization
-SQL Server requires the target database to exist before connecting to it. The `mssql_data_generator.py` script automatically handles this by first connecting to the `master` database with `autocommit=True` and issuing a `CREATE DATABASE citadel` command if it does not already exist. No manual setup is needed.
+SQL Server requires the target database to exist before connecting to it. Both mssql data generator scripts(`mssql_data_generator_pyodbc.py` and `mssql_data_generator_pymssql.py`) automatically handles this by first connecting to the `master` database with `autocommit=True` and issuing a `CREATE DATABASE citadel` command if it does not already exist. No manual setup is needed.
 
 ### SQL Server — Insert Performance & Driver Choice
-You may notice that the `mssql_data_generator.py` script runs noticeably slower than the PostgreSQL or MySQL generators. 
+We provide **two different data generator scripts** for SQL Server to balance performance with ease of setup:
 
-This is an intentional trade-off. We use the **`pymssql`** driver because it is incredibly lightweight and self-contained. The alternative—`pyodbc` with `fast_executemany=True`—is much faster at bulk inserts, but it requires developers to install system-level Microsoft ODBC drivers on their host machine or inside their Python container. 
+1. **`mssql_data_generator_pyodbc.py` (Recommended)**
+   * **Why use it:** Uses the `pyodbc` library with `fast_executemany=True` to execute highly optimized, binary bulk-array transfers. It is exponentially faster than standard inserts.
+   * **Requirement:** You must install the [Microsoft ODBC Driver 18 for SQL Server](https://learn.microsoft.com/en-us/sql/connect/odbc/download-odbc-driver-for-sql-server) on your host machine before running this script.
 
-Because `pymssql`'s `executemany` function sends statements row-by-row over the network rather than as a true bulk binary payload, heavy tables with large JSON blocks and binary blobs take a bit longer to transmit. For a local seeding script generating a few thousand rows, the simplicity and "it-just-works" nature of `pymssql` far outweighs the headache of managing ODBC driver dependencies!
-
+2. **`mssql_data_generator_pymssql.py` (Fallback)**
+   * **Why use it:** Uses the `pymssql` library, which is completely self-contained. It requires **zero system-level drivers** to be installed ("it just works" right after `pip install`).
+   * **The Trade-off:** `pymssql`'s `executemany` function sends statements row-by-row over the network rather than as a true bulk payload. Heavy tables with large JSON blocks and binary blobs (like the `invoices` table) will take noticeably longer to generate. Use this if you cannot install the ODBC driver.
 ### Oracle — Thin vs. Thick Mode
 
 | Mode  | Setup Required              | When to Use                              |
@@ -209,11 +215,12 @@ $env:PATH = "C:\path\to\instantclient;$env:PATH"
 
 ```
 docker-multidb-seed/
-├── docker-compose.yaml          # All 4 databases with health checks
-├── pg_data_generator.py         # PostgreSQL: native ARRAY/JSONB/UUID/INTERVAL
-├── mysql_data_generator.py      # MySQL: native ENUM/JSON, DATETIME(6)
-├── mssql_data_generator.py      # SQL Server: MONEY/UNIQUEIDENTIFIER/DATETIMEOFFSET
-├── oracle_data_generator.py     # Oracle: RAW/BINARY_FLOAT/INTERVAL/CLOB
+├── docker-compose.yaml              # All 4 databases with health checks
+├── pg_data_generator.py             # PostgreSQL: native ARRAY/JSONB/UUID/INTERVAL
+├── mysql_data_generator.py          # MySQL: native ENUM/JSON, DATETIME(6)
+├── mssql_data_generator_pyodbc.py   # SQL Server(Fast bulk inserts-requires MS ODBC): MONEY/UNIQUEIDENTIFIER/DATETIMEOFFSET
+├── mssql_data_generator_pymssql.py  # SQL Server(Zero-dependency fallback): MONEY/UNIQUEIDENTIFIER/DATETIMEOFFSET
+├── oracle_data_generator.py         # Oracle: RAW/BINARY_FLOAT/INTERVAL/CLOB
 └── README.md
 ```
 
